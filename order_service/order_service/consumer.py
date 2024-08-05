@@ -1,5 +1,5 @@
 from order_service.order_pb2 import NotificationPayloadProto, OrderProto
-from .database import get_session
+from .database import engine, Session
 from aiokafka import AIOKafkaConsumer
 from aiokafka.errors import KafkaConnectionError
 from order_service import settings
@@ -41,31 +41,31 @@ async def start_consumer(topic, bootstrap_server, consumer_group_id):
                 quantity = order_proto.quantity
                 price = order_proto.price
 
-                async with get_session() as session:
-                # with Session(engine) as session:
-                    if operation == "add":
-                        order = Order(
-                            id=order_id,
-                            item_name=item_name,
-                            quantity=quantity,
-                            price=price
-                        )
-                        session.add(order)
-                        session.commit()
-                        session.refresh(order)
-                        logging.info(f"Added order: {order}")
-                    
+                with Session(engine) as session:
+
+                    if operation == "add":  
+                        order = Order(  
+                            id=order_id,  
+                            item_name=item_name,  
+                            quantity=quantity,  
+                            price=price  
+                        )  
+                        await session.add(order)  
+                        await session.commit()  
+                        await session.refresh(order)  
+                        logging.info(f"Added order: {order}")  
+                
                     elif operation == "delete":
                         order = session.get(Order, order_id)
                         if order:
-                            session.delete(order)
-                            session.commit()
+                            await session.delete(order)
+                            await session.commit()
                             logging.info(f"Deleted order with id: {order_id}")
                         else:
                             logging.warning(f"Order with id: {order_id} not found for deletion")
 
                     elif operation == "read":
-                        order = session.get(Order, order_id)
+                        order = await session.get(Order, order_id)
                         if order:
                             logging.info(f"Read order: {order}")
                         else:
@@ -77,11 +77,12 @@ async def start_consumer(topic, bootstrap_server, consumer_group_id):
                             order.item_name = item_name
                             order.quantity = quantity
                             order.price = price
-                            session.commit()
-                            session.refresh(order)
+                            await session.commit()
+                            await session.refresh(order)
                             logging.info(f"Updated order: {order}")
                         else:
                             logging.warning(f"Order with id: {order_id} not found for update")
+    
 
             except Exception as e:
                 logger.error(f"Error parsing or processing message: {message.value}, Error: {str(e)}")

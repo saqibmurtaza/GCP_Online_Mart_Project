@@ -55,9 +55,8 @@ class NotificationPayload(BaseModel):
     user_email: str
     user_phone: str
 
-async def send_notification(payload: NotificationPayload, 
-                            producer: AIOKafkaProducer,
-                            topic: str = settings.TOPIC_USER_EVENTS):
+async def send_notification(payload: NotificationPayload, producer: AIOKafkaProducer,
+                            topic: str = settings.TOPIC_ORDER_STATUS):
     await producer.start()
     try:
         payload_proto = NotificationPayloadProto(
