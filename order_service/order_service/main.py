@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from .dependencies import get_mock_order_service, get_real_order_service
 from pydantic import BaseModel
 from typing import List
 from aiokafka import AIOKafkaProducer
@@ -16,20 +17,24 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
-    logger.info('lifespan function ...')
+    logger.info('lifespan function checking...')
     consumer_task= asyncio.create_task(
         start_consumer(
             topic=settings.TOPIC_ORDER_STATUS,
             bootstrap_server=settings.BOOTSTRAP_SERVER,
-            consumer_group_id=settings.CONSUMER_GROUP_NOTIFYME_MANAGER))
+            consumer_group_id=settings.CONSUMER_GROUP_ORDER))
 
     try:
         yield
     finally:
         consumer_task.cancel()
-        await consumer_task
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            print("Consumer Task cancelled")
 
 app = FastAPI(
+    lifespan=lifespan,
     title='SaqibShopSphere _ Order Service',
     servers=[
         {
@@ -50,8 +55,9 @@ class NotificationPayload(BaseModel):
     user_email: str
     user_phone: str
 
-async def send_notification(payload: NotificationPayload, producer: AIOKafkaProducer,
-                            topic: str = settings.TOPIC_ORDER_STATUS):
+async def send_notification(payload: NotificationPayload, 
+                            producer: AIOKafkaProducer,
+                            topic: str = settings.TOPIC_USER_EVENTS):
     await producer.start()
     try:
         payload_proto = NotificationPayloadProto(
