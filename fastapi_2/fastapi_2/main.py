@@ -14,9 +14,9 @@ async def lifespan(app:FastAPI):
     logger.info('creating db tables ...')
     consumer_task= asyncio.create_task(
         start_consumer(
-            topic=settings.TOPIC_PRODUCTS_CRUD,
+            topic=settings.TOPIC_PRODUCT_CRUD,
             bootstrap_server=settings.BOOTSTRAP_SERVER,
-            consumer_group_id=settings.CONSUMER_GROUP_NOTIFYME_MANAGER))
+            consumer_group_id=settings.CONSUMER_GROUP_PRODUCT_MANAGER))
     create_db_tables()
     try:
         yield

@@ -64,7 +64,6 @@ services:
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002  # Add this line for the Admin GUI
       # KONG_DECLARATIVE_CONFIG: "/opt/kong/kong.yaml"  # Mount point for kong.yaml
-    
     networks:
       - kong-net
     ports:
@@ -72,8 +71,8 @@ services:
       - "8001:8001"
       - "8002:8002"  # Add this line for the Admin GUI
     volumes:
-      - kong-data:/var/lib/postgresql/data  # Mount Kong's PostgreSQL data directory to a volume
-      - kong-data:/var/lib/kong # keep kong services/routes persistently saved if container removed
+      - kong-data-kong:/var/lib/kong  # Mount Kong's data directory to a volume
+
 
     # command: kong start -v -c /opt/kong/kong.yaml
     healthcheck:
@@ -214,7 +213,8 @@ services:
 volumes:
   kong-data:
     driver: local
+  kong-data-kong:
+    external: true  # Use an existing volume called 'kong-data-kong'
   postgres_data_fastapi_02:
     driver: local
-
 

@@ -8,11 +8,15 @@ from fastapi_2.product_pb2 import ProductEvent
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def start_consumer(topic, bootstrap_server, consumer_group_id):
+async def start_consumer(
+                topic, 
+                bootstrap_server, consumer_group_id
+                ):
     consumer = AIOKafkaConsumer(
-        topic, 
-        bootstrap_servers=bootstrap_server, 
-        group_id=consumer_group_id)
+                topic, 
+                bootstrap_servers=bootstrap_server, 
+                group_id=consumer_group_id
+                )
     # Retry mechanism to keep up the consumer
     while True:
         try:
@@ -52,28 +56,28 @@ async def start_consumer(topic, bootstrap_server, consumer_group_id):
                         session.add(product)
                         session.commit()
                         session.refresh(product)
-                        logging.info(f"Added product: {product}")
+                        logging.info(f"ADDED_PRODUCT: {product}")
                         
                     except Exception as e:
                         session.rollback()
-                        logging.error(f"Failed to add product: {product}, Error: {str(e)}")
+                        logging.error(f"FAILED_TO_ADD_PRODUCT: {product}, ERROR: {str(e)}")
                 elif operation == "delete":
                     product_id = product_data_proto.id
                     product = session.get(Product, product_id)
                     if product:
                         session.delete(product)
                         session.commit()
-                        logging.info(f"Deleted product with id: {product_id}")
+                        logging.info(f"DELETED PRODUCT_OF_ID: {product_id}")
                     else:
-                        logging.warning(f"Product with id: {product_id} not found for deletion")
+                        logging.warning(f"PRODUCT_WITH_ID: {product_id} NOT_FOUND_TO_DELETE")
 
                 elif operation == "read":
                     product_id = product_data_proto.id
                     product = session.get(Product, product_id)
                     if product:
-                        logging.info(f"Read product: {product}")
+                        logging.info(f"READ_PRODUCT: {product}")
                     else:
-                        logging.warning(f"Product with id: {product_id} not found")
+                        logging.warning(f"PRODUCT_ID: {product_id} NOT_FOUND")
 
                 elif operation == "update":
                     product_id = product_data_proto.id
@@ -84,13 +88,13 @@ async def start_consumer(topic, bootstrap_server, consumer_group_id):
                         product.price = product_data_proto.price
                         session.commit()
                         session.refresh(product)
-                        logging.info(f"Updated product: {product}")
+                        logging.info(f"UPDATED_PRODUCT_INFO: {product}")
                     else:
-                        logging.warning(f"Product with id: {product_id} not found for update")
+                        logging.warning(f"PRODUCT_ID: {product_id} NOT_FOUND_TO_UPDATE")
 
     except asyncio.CancelledError:
-        logger.info("Consumer task was cancelled")
+        logger.info("CONSUMER_TASK_CANCELLED")
     except Exception as e:
-        logger.error(f"Error processing message: {message.value}, Error: {str(e)}")
+        logger.error(f"ERROR_IN_PROCESSING_MSSG: {message.value}, ERROR: {str(e)}")
     finally:
         await consumer.stop()
