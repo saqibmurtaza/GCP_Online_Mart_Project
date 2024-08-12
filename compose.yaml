@@ -216,5 +216,5 @@ volumes:
   kong-data-kong:
     external: true  # Use an existing volume called 'kong-data-kong'
   postgres_data_fastapi_02:
-    driver: local
+    
 
